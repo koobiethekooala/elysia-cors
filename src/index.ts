@@ -204,8 +204,8 @@ export const cors = (config?: CORSConfig) => {
 		typeof origin === 'boolean'
 			? undefined
 			: Array.isArray(origin)
-				? origin
-				: [origin]
+			? origin
+			: [origin]
 
 	const app = new Elysia({
 		name: '@elysiajs/cors',
@@ -317,18 +317,23 @@ export const cors = (config?: CORSConfig) => {
 
 	app.headers(defaultHeaders)
 
-	function handleOption({ set, request, headers }: Context) {
+	function handleOption({ set, request }: Context) {
 		handleOrigin(set as any, request)
 		handleMethod(set, request.headers.get('access-control-request-method'))
 
-		if (allowedHeaders === true || exposeHeaders === true) {
-			if (allowedHeaders === true)
-				set.headers['access-control-allow-headers'] =
-					headers['access-control-request-headers']
+		if (allowedHeaders === true) {
+			const requestHeaders = request.headers.get(
+				'access-control-request-headers'
+			)
+			if (requestHeaders) {
+				set.headers['access-control-allow-headers'] = requestHeaders
+			}
+		}
 
-			if (exposeHeaders === true)
-				set.headers['access-control-expose-headers'] =
-					Object.keys(headers).join(',')
+		if (exposeHeaders === true) {
+			// @ts-ignore
+			const headers = processHeaders(request.headers)
+			set.headers['access-control-expose-headers'] = headers
 		}
 
 		if (maxAge) set.headers['access-control-max-age'] = maxAge.toString()
